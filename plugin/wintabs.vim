@@ -101,6 +101,7 @@ else
 endif
 call s:set('g:wintabs_ui_active_vimtab_left', ' ')
 call s:set('g:wintabs_ui_active_vimtab_right', ' ')
+call s:set('g:wintabs_delete_buffers', 1)
 
 if g:wintabs_display == 'tabline'
   call s:set('g:wintabs_ui_active_higroup', 'TabLineSel')

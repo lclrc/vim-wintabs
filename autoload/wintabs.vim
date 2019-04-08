@@ -400,7 +400,11 @@ function! wintabs#init()
       augroup END
     endif
   else
-    autocmd BufWinEnter,WinEnter,VimEnter * call wintabs#refresh_buflist(0)
+    "TODO
+    augroup wintabs_refresh_if_none
+      autocmd!
+      autocmd BufWinEnter,VimEnter * call wintabs#refresh_buflist(0)
+    augroup END
   endif
 
   if g:wintabs_display != 'statusline'
@@ -636,7 +640,9 @@ endfunction
 " run post-delete triggers
 function! s:post_delete(buffer)
   call wintabs#undo#push(a:buffer)
-  call s:purge(a:buffer)
+  if g:wintabs_delete_buffers == 1
+    call s:purge(a:buffer)
+  endif
 endfunction
 
 " delete buffer from buflist if it's safe to do so: the buffer must be listed, 
