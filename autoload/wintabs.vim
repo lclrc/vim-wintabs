@@ -403,7 +403,7 @@ function! wintabs#init()
     "TODO
     augroup wintabs_refresh_if_none
       autocmd!
-      autocmd BufWinEnter,VimEnter * call wintabs#refresh_buflist(0)
+      autocmd BufWinEnter,VimEnter,BufFilePost * call wintabs#refresh_buflist(0)
     augroup END
   endif
 
@@ -435,12 +435,17 @@ function! wintabs#refresh_buflist(window)
   " load buflist from saved value
   let buflist = wintabs#getwinvar(window, 'wintabs_buflist', [])
 
+  echo "refresh"
+
   " remove stale bufs
   call filter(buflist, 's:buflisted(v:val)')
 
   " add current buf
   let current_buffer = winbufnr(window)
+  echo "index in list: "
+  echo index(buflist, current_buffer)
   if index(buflist, current_buffer) == -1 && s:buflisted(current_buffer)
+    echo "added buffer"
     if (g:wintabs_reverse_order)
       call insert(buflist, current_buffer)
     else
@@ -514,6 +519,16 @@ function! s:buflisted(buffer)
   let filetype = getbufvar(a:buffer, '&filetype')
   let ignored = index(g:wintabs_ignored_filetypes, filetype) != -1
   let empty = bufname(a:buffer) == '' && !getbufvar(a:buffer, '&modified')
+  echo "ft:"
+  echo filetype
+  echo "ignored:"
+  echo ignored
+  echo "empty:"
+  echo empty
+  echo "name:"
+  echo bufname(a:buffer)
+  echo "listed:"
+  echo buflisted(a:buffer)
   return buflisted(a:buffer) && !ignored && !empty
 endfunction
 
