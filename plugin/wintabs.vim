@@ -64,58 +64,20 @@ function! s:set(var, value)
 endfunction
 
 " major
-call s:set('g:wintabs_display', 'tabline')
 call s:set('g:wintabs_autoclose', 1)
 call s:set('g:wintabs_autoclose_vim', 0)
 call s:set('g:wintabs_autoclose_vimtab', 0)
 call s:set('g:wintabs_switchbuf', &switchbuf)
-if exists('g:loaded_airline') && g:loaded_airline
-  call s:set('g:wintabs_statusline', '%!airline#statusline(winnr())')
-elseif exists('g:loaded_lightline') && g:loaded_lightline
-  call s:set('g:wintabs_statusline', '%!lightline#statusline(0)')
-elseif !empty(&statusline)
-  call s:set('g:wintabs_statusline', '%#StatusLine#'.&statusline.'%##')
-else
-  call s:set('g:wintabs_statusline', '')
-endif
-call s:set('g:wintabs_reverse_order', 0)
 call s:set('g:wintabs_ignored_filetypes', ['gitcommit', 'vundle', 'qf', 'vimfiler'])
+call s:set('g:wintabs_reverse_order', 0)
 call s:set('g:wintabs_renderers', wintabs#renderers#defaults())
-
-" ui
-call s:set('g:wintabs_ui_modified', ' +')
-call s:set('g:wintabs_ui_readonly', ' -')
-call s:set('g:wintabs_ui_sep_leftmost', ' ')
-call s:set('g:wintabs_ui_sep_inbetween', '|')
-call s:set('g:wintabs_ui_sep_rightmost', '|')
-call s:set('g:wintabs_ui_active_left', ' ')
-call s:set('g:wintabs_ui_active_right', ' ')
-call s:set('g:wintabs_ui_buffer_name_format', ' %t ')
-call s:set('g:wintabs_ui_show_vimtab_name', 0)
-if g:wintabs_ui_show_vimtab_name == 0
-  call s:set('g:wintabs_ui_vimtab_name_format', '%n')
-elseif g:wintabs_ui_show_vimtab_name == 1
-  call s:set('g:wintabs_ui_vimtab_name_format', '%t')
-else
-  call s:set('g:wintabs_ui_vimtab_name_format', '%n:%t')
-endif
-call s:set('g:wintabs_ui_active_vimtab_left', ' ')
-call s:set('g:wintabs_ui_active_vimtab_right', ' ')
-call s:set('g:wintabs_delete_buffers', 1)
-
-if g:wintabs_display == 'tabline'
-  call s:set('g:wintabs_ui_active_higroup', 'TabLineSel')
-endif
-
-if g:wintabs_display == 'statusline'
-  call s:set('g:wintabs_ui_active_higroup', 'Normal')
-endif
-
-" private
-call s:set('g:wintabs_ui_arrow_left', ' < ')
-call s:set('g:wintabs_ui_arrow_right', ' > ')
-call s:set('g:wintabs_ui_sep_spaceline', '|')
 call s:set('g:wintabs_undo_limit', 100)
+call s:set('g:wintabs_marker_modified', "!")
+call s:set('g:wintabs_marker_current', "*")
+call s:set('g:wintabs_separator', " ")
+call s:set('g:wintabs_only_basename', 1)
+call s:set('g:wintabs_show_number', 0)
+call s:set('g:wintabs_number_separator', " ")
 
 " init session
 call wintabs#session#init()

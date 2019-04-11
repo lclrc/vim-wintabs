@@ -1,53 +1,41 @@
 # vim-wintabs
 
+This is a fork of the original Wintabs with the following modifications:
+-   No ui elements changed by default.
+-   You can add the tablist to your statusline/tabline using provided functions.
+-   Adds ring buffer for removed buffers, windows, and tabs (TODO).
+-   Doesn't delete buffers automatically.
+-   At the moment WIP
+
 Wintabs is a per-window buffer manager for Vim. It creates "tabs" for each 
-buffer opened in every Vim window, and displays these buffers either on tabline 
-or statusline. It brings persistent contexts to Vim windows and tabs, making 
-them more awesome.
+buffer opened in every Vim window, and provides functions to display those
+on your tabline or statusline. It brings persistent contexts to Vim windows 
+and tabs, making them more awesome.
 
 # Screenshots
 
-Wintabs with two native Vim tabs, showing buffers and tabs on tabline:
-
-![image](https://raw.githubusercontent.com/zefei/vim-wintabs/master/screenshots/screenshot1.gif)
-
-Wintabs with two Vim windows, showing buffers on statusline. It nicely preserves 
-window layout when switching/closing tabs:
-
-![image](https://raw.githubusercontent.com/zefei/vim-wintabs/master/screenshots/screenshot2.gif)
-
-Wintabs manages long tablines nicely (better than Vim does!):
-
-![image](https://raw.githubusercontent.com/zefei/vim-wintabs/master/screenshots/screenshot3.png)
-
-Using Powerline fonts:
-
-![image](https://raw.githubusercontent.com/zefei/vim-wintabs-powerline/master/screenshots/screenshot1.png)
+TODO
 
 # Installation
 
-Use your favorite package manager to install. `vim-wintabs-powerline` is 
-optional, used for Powerline style rendering.
+Use your favorite package manager to install.
 
 [pathogen](https://github.com/tpope/vim-pathogen)
 
-    git clone https://github.com/zefei/vim-wintabs ~/.vim/bundle/vim-wintabs
-    git clone https://github.com/zefei/vim-wintabs-powerline ~/.vim/bundle/vim-wintabs-powerline
+    git clone https://github.com/rgreenblatt/vim-wintabs ~/.vim/bundle/vim-wintabs
 
 [vundle](https://github.com/vundlevim/vundle.vim)
 
-    plugin 'zefei/vim-wintabs'
-    plugin 'zefei/vim-wintabs-powerline'
+    plugin 'rgreenblatt/vim-wintabs'
 
 [vim-plug](https://github.com/junegunn/vim-plug)
 
-    plug 'zefei/vim-wintabs'
-    plug 'zefei/vim-wintabs-powerline'
+    plug 'rgreenblatt/vim-wintabs'
 
 # Usage
 
 By default, wintabs maintains a list of buffers for each buffer opened in each 
-window, and displays them on tabline. To navigate and manage these buffers, a 
+window. To navigate and manage these buffers, a 
 few commands and key mappings are provided, and they are very similar to what 
 Vim buffers/tabs have.
 
@@ -80,10 +68,56 @@ Below is an example of key mappings:
 
 See `:help wintabs-commands` for all available commands and mappings.
 
-Wintabs can display buffers on either tabline or statusline. It's recommended to 
-use tabline if you typically work without using split windows; otherwise, 
-statusline is recommended. If Wintabs is set to use statusline, it automatically 
-moves your original statusline content to tabline.
+Displaying the list of buffers in your statusline can be done using the
+`wintabs#get_tablist` function. Note that the function must be called in each
+window to pick up on window local variables. The function takes a single
+argument.  If 0 is passed, it returns a formated list with the buffers before
+the current buffer.  If 1 is passed, it returns a formated version of the 
+current buffer. If 2 is passed, it returns a formated list with the buffers 
+after the current buffer. If -1 is passed, it returns the entire list.
+The are options to control the appearance of the list.
+
+Below is an example of a lightline config:
+    function! WinTabBefore() abort
+      return "%{wintabs#get_tablist(0)}"
+    endfunction
+    
+    function! WinTabCurrent() abort
+      return "%{wintabs#get_tablist(1)}"
+    endfunction
+    
+    function! WinTabAfter() abort
+      return "%{wintabs#get_tablist(2)}"
+    endfunction
+
+    let g:wintabs_marker_modified = "!"
+    let g:wintabs_marker_current = ""
+    let g:wintabs_separator = " "
+    let g:wintabs_number_separator = " "
+    let g:wintabs_only_basename = 1
+    let g:wintabs_show_number = 1
+
+    let g:lightline = {
+          \   'right': [ [ 'lineinfo' ],
+          \              [ 'filetype' ],
+          \              [ 'wintab_after', 'wintab_current', 
+          \               'wintab_before' ] ],
+          \ },
+          \ 'inactive': {
+          \   'right': [ [ 'lineinfo' ],
+          \              [ 'filetype' ],
+          \              [ 'wintab_after', 'wintab_current', 
+          \               'wintab_before' ] ],
+          \ },
+          \ 'component_expand': {
+          \   'wintab_before': 'WinTabBefore',
+          \   'wintab_current': 'WinTabCurrent',
+          \   'wintab_after': 'WinTabAfter',
+          \ },
+          \ 'component_type': {
+          \   'wintab_current': 'error',
+          \ }
+          \ }
 
 # Configuration
 
@@ -92,22 +126,11 @@ details.
 
 # FAQ
 
-Q: Does wintabs support Powerline fonts?
-
-A: Yes. The [vim-wintabs-powerline 
-plugin](https://github.com/zefei/vim-wintabs-powerline) provides a set of 
-renderers for using Powerline fonts with wintabs.
-
 Q: Does wintabs support Vim sessions?
 
 A: Yes, as long as your `sessionoptions` contains `"globals"`. Wintabs also 
 supports [xolox/vim-session](https://github.com/xolox/vim-session) out of the 
 box.
-
-Q: Does wintabs work with statusline/tabline plugins like airline?
-
-A: Wintabs can work reasonably well with statusline/tabline plugins as long as 
-you load wintabs after other plugins.
 
 # License
 

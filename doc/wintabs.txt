@@ -12,18 +12,25 @@ CONTENTS                                                             *wintabs*
 ==============================================================================
 INTRO                                                          *wintabs-intro*
 
+This is a fork of the original Wintabs with the following modifications:
+-   No ui elements changed by default.
+-   You can add the tablist to your statusline/tabline using provided functions.
+-   Adds ring buffer for removed buffers, windows, and tabs (TODO).
+-   Doesn't delete buffers automatically.
+-   At the moment WIP
+
 Wintabs is a per-window buffer manager for Vim. It creates "tabs" for each 
-buffer opened in every Vim window, and displays these tabs either on |tabline| 
-or |statusline|. It brings persistent contexts to Vim windows and tabs, making 
-them more awesome.
+buffer opened in every Vim window, and provides functions to display those
+on your tabline or statusline. It brings persistent contexts to Vim windows 
+and tabs, making them more awesome.
 
 ==============================================================================
 USAGE                                                          *wintabs-usage*
 
-By default, wintabs maintains a list of tabs for each buffer opened in each 
-window, and displays them on tabline. To navigate and manage these tabs, a few 
-|wintabs-commands| and key mappings are provided, and they are very similar to 
-what Vim buffers/tabs have.
+By default, wintabs maintains a list of buffers for each buffer opened in each 
+window. To navigate and manage these buffers, a 
+few commands and key mappings are provided, and they are very similar to what 
+Vim buffers/tabs have.
 
 To make full use of wintabs, it is recommended to have the following commands 
 or keys mapped, these are the essential ones:
@@ -40,8 +47,8 @@ or keys mapped, these are the essential ones:
   |:WintabsCloseVimtab|  |<Plug>(wintabs_close_vimtab)|   |:tabclose|
   |:WintabsOnlyVimtab|   |<Plug>(wintabs_only_vimtab)|    |:tabonly|
 
-Below is an example of key mappings:>
-
+Below is an example of key mappings:
+>
     map <C-H> <Plug>(wintabs_previous)
     map <C-L> <Plug>(wintabs_next)
     map <C-T>c <Plug>(wintabs_close)
@@ -51,14 +58,61 @@ Below is an example of key mappings:>
     map <C-W>o <Plug>(wintabs_only_window)
     command! Tabc WintabsCloseVimtab
     command! Tabo WintabsOnlyVimtab
-<
+
 
 See wintabs-commands for all available commands and mappings.
 
-Wintabs can display buffers on either tabline or statusline. It's recommended 
-to use tabline if you typically work without using split windows; otherwise, 
-statusline is recommended. If Wintabs is set to use statusline, it 
-automatically moves your original statusline content to tabline.
+Displaying the list of buffers in your statusline/tabline can be done using the
+`wintabs#get_tablist` function. Note that the function must be called in each
+window to pick up on window local variables. The function takes a single
+argument.  If 0 is passed, it returns a formated list with the buffers before
+the current buffer.  If 1 is passed, it returns a formated version of the 
+current buffer. If 2 is passed, it returns a formated list with the buffers 
+after the current buffer. If -1 is passed, it returns the entire list.
+The are options to control the appearance of the list.
+
+Below is an example of a lightline config:
+>
+    function! WinTabBefore() abort
+      return "%{wintabs#get_tablist(0)}"
+    endfunction
+    
+    function! WinTabCurrent() abort
+      return "%{wintabs#get_tablist(1)}"
+    endfunction
+    
+    function! WinTabAfter() abort
+      return "%{wintabs#get_tablist(2)}"
+    endfunction
+
+    let g:wintabs_marker_modified = "!"
+    let g:wintabs_marker_current = ""
+    let g:wintabs_separator = " "
+    let g:wintabs_number_separator = " "
+    let g:wintabs_only_basename = 1
+    let g:wintabs_show_number = 1
+
+    let g:lightline = {
+          \   'right': [ [ 'lineinfo' ],
+          \              [ 'filetype' ],
+          \              [ 'wintab_after', 'wintab_current', 
+          \               'wintab_before' ] ],
+          \ },
+          \ 'inactive': {
+          \   'right': [ [ 'lineinfo' ],
+          \              [ 'filetype' ],
+          \              [ 'wintab_after', 'wintab_current', 
+          \               'wintab_before' ] ],
+          \ },
+          \ 'component_expand': {
+          \   'wintab_before': 'WinTabBefore',
+          \   'wintab_current': 'WinTabCurrent',
+          \   'wintab_after': 'WinTabAfter',
+          \ },
+          \ 'component_type': {
+          \   'wintab_current': 'error',
+          \ }
+          \ }
 
 ==============================================================================
 COMMANDS AND MAPPINGS                                       *wintabs-commands*
@@ -160,14 +214,6 @@ These are wintab commands and their normal mode key mappings.
 ==============================================================================
 OPTIONS                                                      *wintabs-options*
 
-*g:wintabs_display*
-values: 'tabline', 'statusline', or 'none'
-default: 'tabline'
-                This controls where wintabs are drawn.
-                'tabline' is recommended if you typically work without using 
-                split windows.
-                Otherwise, 'statusline' is recommended.
-
 *g:wintabs_autoclose*
 values: 0, 1, or 2
 default: 1
@@ -203,18 +249,6 @@ default: value of |switchbuf| option
                 'usetab': similar to 'useopen' but searches in all vim tabs.
                 '': always open in current window.
 
-*g:wintabs_statusline*
-values: |statusline| string
-default: value of |statusline| option
-                When |g:wintabs_display| is set to 'statusline', wintabs 
-                occupies current statusline and moves the original statusline 
-                content to tabline.
-                By default, this option is set to what 'original statusline' 
-                is. If vim-airline is installed, airline#statusline() is used.
-                Set this option to a custom function like "%!MyStatusline()" 
-                if you want to show complex and customized status on tabline.
-                Set this option to empty string to disable this behavior.
-
 *g:wintabs_ignored_filetypes*
 values: list of filetype strings
 default: ['gitcommit', 'vundle', 'qf', 'vimfiler']
@@ -228,95 +262,57 @@ default: 0
                 This controls whether new buffers will be added to the
                 beginning of the wintabs list rather than the end.
 
-*g:wintabs_renderers*
-values: dictionary of renderer functions
-default: wintabs#renderers#defaults()
-                This dictionary contains all wintabs renderer functions. These 
-                functions can be overriden to customize all wintabs UI.
-                To see how renderer function works, take a look at the default 
-                buffer renderer implementation inside 
-                `autoload/wintabs/renderers.vim`.
+*g:wintabs_undo_limit*
+values: some integer
+default: 100
+                This controls the number of changes stored in the undo
+                history.
 
-                vim-wintabs-powerline provides a set of renderers for using 
-                Powerline fonts with wintabs.
+*g:wintabs_marker_modified*
+values: some string
+default: "!"
+                This controls the marker used by `wintabs#get_tablist` to show
+                if a buffer is modified.
 
-*g:wintabs_ui_modified*
-values: string
-default: ' +'
-                This sets the |'modified'| mark for modified buffers.
+*g:wintabs_marker_current*
+values: some string
+default: "*"
+                This controls the marker used by `wintabs#get_tablist` to show
+                if a buffer is the currently displayed buffer.
 
-*g:wintabs_ui_readonly*
-values: string
-default: ' -'
-                This sets the |'readonly'| mark for readonly buffers.
+*g:wintabs_separator*
+values: some string
+default: " "
+                This controls the separator placed between buffers by 
+                `wintabs#get_tablist`.
 
-*g:wintabs_ui_sep_leftmost*
-*g:wintabs_ui_sep_inbetween*
-*g:wintabs_ui_sep_rightmost*
-values: string
-default: '', '|', '|'
-                These characters are drawn before wintabs, between wintabs, 
-                and after wintabs. It's recommended that they have the same 
-                length, and are ascii characters.
+*g:wintabs_only_basename*
+values: 0 or 1
+default: 1
+                This controls if `wintabs#get_tablist` just shows the buffer
+                basename.
 
-*g:wintabs_ui_active_left*
-*g:wintabs_ui_active_right*
-values: string
-default: ' '
-                These characters are drawn around the active wintab. 
-                '[]' and ')(' are some of the good ones. It's recommended that
-                they have the same length as separators, and are ascii 
-                characters.
+*g:wintabs_show_number*
+values: 0 or 1
+default: 0
+                This controls if `wintabs#get_tablist` just shows the buffers
+                list index in the tab list.
 
-*g:wintabs_ui_buffer_name_format*
-values: string
-default: ' %t '
-                You can specify format of wintab representation.
-                By default it is only name of buffer. But you can use the
-                following arguments:
-                '%t': name of buffer
-                '%n': |bufnr()| of buffer
-                '%o': ordinal number of buffer
-
-*g:wintabs_ui_vimtab_name_format*
-values: string
-default: ' %n '
-                You can specify format of Vim tab representation.
-                By default it is only number of Vim tab. But you can use the
-                following arguments:
-                '%t': name of buffer on this tab
-                '%n': number of Vim tab
-
-*g:wintabs_ui_active_vimtab_left*
-*g:wintabs_ui_active_vimtab_right*
-values: string
-default: ' '
-                These characters are drawn around the active Vim tab.
-                '[]' and '<>' are some of the good ones. It's recommended that
-                they have the same length as separators.
-
-*g:wintabs_ui_active_higroup*
-values: string of highlight group
-default: 'TabLineSel' or 'Normal', depending on |g:wintabs_display|
-                This sets the highlight group of the active wintab.
+*g:wintabs_number_separator*
+values: 0 or 1
+default: " "
+                This controls the separator placed between the number and the
+                buffer by `wintabs#get_tablist`.
 
 ==============================================================================
 FAQ                                                              *wintabs-faq*
 
-Q: Does wintabs support Powerline fonts?
-
-A: Yes. The vim-wintabs-powerline addon provides a set of renderers for using 
-Powerline fonts with wintabs.
 
 Q: Does wintabs support Vim sessions?
 
-A: Yes, as long as your |'sessionoptions'| contains "globals". Wintabs also 
-supports xolox/vim-session plugin out of the box.
-
-Q: Does wintabs work with statusline/tabline plugins like airline?
-
-A: Wintabs can work reasonably well with statusline/tabline plugins as long as 
-you load wintabs after other plugins.
+A: Yes, as long as your `sessionoptions` contains `"globals"`. Wintabs also 
+supports [xolox/vim-session](https://github.com/xolox/vim-session) out of the 
+box.
 
 ==============================================================================
 

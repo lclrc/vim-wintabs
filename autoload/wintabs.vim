@@ -1,4 +1,3 @@
-" util functions to for v:version < 704
 function! wintabs#gettabwinvar(tabnr, winnr, varname, def)
   let vars = gettabwinvar(a:tabnr, a:winnr, '')
   if empty(vars)
@@ -12,6 +11,76 @@ function! wintabs#getwinvar(winnr, varname, def)
     return a:def
   endif
   return get(vars, a:varname, a:def)
+endfunction
+
+"get tablist
+"before current buffer if 0, current buffer if 1, after current buffer if 2,
+"whole list if -1
+function! wintabs#get_tablist(type)
+  if exists("w:wintabs_buflist")
+    let s:list = ''
+
+    let l:reached = 0
+
+    let l:index = 0
+
+    for l:i in w:wintabs_buflist
+      let l:index = l:index + 1
+
+      if a:type != -1
+        if winbufnr(0) == l:i
+          let l:reached = 1
+          if a:type == 0
+            break
+          elseif a:type == 2
+            continue
+          endif
+        else
+          if a:type == 1
+            if l:reached == 1 
+              break
+            else
+              continue
+            endif
+          elseif a:type == 2
+            if l:reached == 0 
+              continue
+            endif
+          endif
+        endif
+      endif
+
+      if g:wintabs_only_basename == 1
+        let l:name = bufname(l:i)
+      else
+        let l:name = fnamemodify(bufname(l:i), ":t")
+      endif
+      let l:name = substitute(l:name, "%", "%%", "g")
+      if l:name == ""
+        let l:name = "[No Name]"
+      endif
+        
+      if g:wintabs_show_number == 1
+        let s:list = s:list . l:index . g:wintabs_number_separator
+      endif
+
+      if winbufnr(0) == l:i
+        let s:list = s:list . g:wintabs_marker_current
+      endif
+
+      let s:list = s:list . l:name
+
+      if getbufvar(l:i, "&modified") == 1
+        let s:list = s:list . g:wintabs_marker_modified
+      endif
+      
+      let s:list = s:list . g:wintabs_separator
+    endfor
+
+    return trim(s:list)
+  else
+    return ""
+  endif
 endfunction
 
 " jump to next/previous tab
@@ -372,59 +441,15 @@ endfunction
 function! wintabs#init()
   call wintabs#refresh_buflist(0)
 
-  if g:wintabs_display == 'tabline'
-    " disable gui tabline
-    if has('gui_running')
-      set guioptions-=e
-    endif
-
-    set showtabline=2
-    set tabline=%!wintabs#ui#get_tabline()
-  elseif g:wintabs_display == 'statusline'
-    set laststatus=2
-
-    " statusline needs constant reset to test for active window
-    augroup wintabs_set_statusline
-      autocmd!
-      autocmd BufWinEnter,WinEnter,VimEnter * call wintabs#ui#set_statusline()
-    augroup END
-    call wintabs#ui#set_statusline()
-
-    " show original statusline in tabline
-    if !empty(g:wintabs_statusline)
-      set showtabline=2
-      let &tabline = g:wintabs_statusline
-      augroup wintabs_set_tabline
-        autocmd!
-        autocmd InsertEnter,InsertLeave,CursorMoved,CursorMovedI * :let &ro=&ro
-      augroup END
-    endif
-  else
-    "TODO
-    augroup wintabs_refresh_if_none
-      autocmd!
-      autocmd BufWinEnter,VimEnter,BufFilePost * call wintabs#refresh_buflist(0)
-    augroup END
-  endif
-
-  if g:wintabs_display != 'statusline'
-    augroup wintabs_set_statusline
-      autocmd!
-    augroup END
-  endif
+  augroup wintabs_refresh_if_none
+    autocmd!
+    autocmd BufWinEnter,VimEnter,BufFilePost * call wintabs#refresh_buflist(0)
+  augroup END
 
   " hijack buffer switching
   augroup wintabs_switching_buffer
     autocmd!
     autocmd BufWinEnter * call wintabs#switching_buffer()
-  augroup END
-
-  " handle statuslie/tabline changes done by other plugins
-  augroup wintabs_override_plugin_changes
-    autocmd!
-    autocmd CmdwinEnter,CmdwinLeave,GUIEnter,ColorScheme,OptionSet,SourcePre,
-          \VimEnter,WinEnter,BufWinEnter,FileType,BufUnload,CompleteDone,
-          \VimResized,TabEnter,BufWritePost,SessionLoadPost * call s:override_plugin_changes()
   augroup END
 endfunction
 
@@ -687,13 +712,3 @@ function! s:open_buffer_in(tabpage, window, buffer)
   execute 'confirm buffer '.a:buffer
 endfunction
 
-" override statusline/tabline changes made by other plugins
-function! s:override_plugin_changes()
-  if g:wintabs_display == 'tabline'
-        \&& match(&tabline, '%!wintabs#ui#get_tabline') == -1
-    set tabline=%!wintabs#ui#get_tabline()
-  elseif g:wintabs_display == 'statusline'
-        \&& match(&statusline, '%!wintabs#ui#get_statusline') == -1
-    call wintabs#ui#set_statusline()
-  endif
-endfunction
