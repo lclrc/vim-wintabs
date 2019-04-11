@@ -50,7 +50,7 @@ function! wintabs#get_tablist(type)
         endif
       endif
 
-      if g:wintabs_only_basename == 1
+      if g:wintabs_only_basename == 0
         let l:name = bufname(l:i)
       else
         let l:name = fnamemodify(bufname(l:i), ":t")
@@ -59,7 +59,7 @@ function! wintabs#get_tablist(type)
       if l:name == ""
         let l:name = "[No Name]"
       endif
-        
+
       if g:wintabs_show_number == 1
         let s:list = s:list . l:index . g:wintabs_number_separator
       endif
