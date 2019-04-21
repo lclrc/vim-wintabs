@@ -702,7 +702,8 @@ endfunction
 " test if a buffer can be safely closed: it can if it isn't modified, or it's 
 " attached to more than one window
 function! s:can_be_closed(buffer)
-  return !getbufvar(a:buffer, '&modified') || s:count_occurrence(a:buffer) > 1
+  return (!g:wintabs_delete_buffers && &hidden) || 
+        \ !getbufvar(a:buffer, '&modified') || s:count_occurrence(a:buffer) > 1
 endfunction
 
 " open a buffer inside a particular window
