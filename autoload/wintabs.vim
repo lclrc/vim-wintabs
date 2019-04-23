@@ -37,13 +37,13 @@ function! wintabs#get_tablist(type)
           endif
         else
           if a:type == 1
-            if l:reached == 1 
+            if l:reached == 1
               break
             else
               continue
             endif
           elseif a:type == 2
-            if l:reached == 0 
+            if l:reached == 0
               continue
             endif
           endif
@@ -66,6 +66,12 @@ function! wintabs#get_tablist(type)
 
       if winbufnr(0) == l:i
         let s:list = s:list . g:wintabs_marker_current
+      else
+        if g:wintabs_not_current_character_limit &&
+              \ len(l:name) > (g:wintabs_not_current_character_limit + 1)
+          let l:name = l:name[:g:wintabs_not_current_character_limit - 1] .
+                \ g:wintabs_marker_cutoff
+        endif
       endif
 
       let s:list = s:list . l:name
@@ -73,7 +79,7 @@ function! wintabs#get_tablist(type)
       if getbufvar(l:i, "&modified") == 1
         let s:list = s:list . g:wintabs_marker_modified
       endif
-      
+
       let s:list = s:list . g:wintabs_separator
     endfor
 
@@ -396,7 +402,7 @@ function! wintabs#move_to_window(wincmd_arg)
   let autoclose = g:wintabs_autoclose
   let g:wintabs_autoclose = 0
 
-  " open buffer in new window, go back to old window, close current buffer, come 
+  " open buffer in new window, go back to old window, close current buffer, come
   " back to new window
   execute 'buffer '.buffer
   execute old_winnr.'wincmd w'
@@ -472,6 +478,13 @@ function! wintabs#refresh_buflist(window)
       call add(buflist, current_buffer)
     endif
   endif
+  if g:wintabs_buffer_limit && g:wintabs_buffer_limit < len(buflist)
+    if (g:wintabs_reverse_order)
+      call remove(buflist, -1)
+    else
+      call remove(buflist, 0)
+    endif
+  endif
 
   " save buflist
   call setwinvar(window, 'wintabs_buflist', buflist)
@@ -515,7 +528,7 @@ function! wintabs#switching_buffer()
             confirm close
           endif
 
-          " if vim supports async, switch to the existing buffer at next tick to 
+          " if vim supports async, switch to the existing buffer at next tick to
           " avoid racing with autocmds, otherwise switch immediately
           if has('timers') && has('lambda')
             call timer_start(0, {-> s:open_buffer_in(tabpage, window, buffer)})
@@ -670,7 +683,7 @@ function! s:post_delete(buffer)
   endif
 endfunction
 
-" delete buffer from buflist if it's safe to do so: the buffer must be listed, 
+" delete buffer from buflist if it's safe to do so: the buffer must be listed,
 " not modified, not attached to any window, not shown in any window
 function! s:purge(buffer)
   if !buflisted(a:buffer)
@@ -699,10 +712,10 @@ function! s:count_occurrence(buffer)
   return occurrences
 endfunction
 
-" test if a buffer can be safely closed: it can if it isn't modified, or it's 
+" test if a buffer can be safely closed: it can if it isn't modified, or it's
 " attached to more than one window
 function! s:can_be_closed(buffer)
-  return (!g:wintabs_delete_buffers && &hidden) || 
+  return (!g:wintabs_delete_buffers && &hidden) ||
         \ !getbufvar(a:buffer, '&modified') || s:count_occurrence(a:buffer) > 1
 endfunction
 
@@ -712,4 +725,3 @@ function! s:open_buffer_in(tabpage, window, buffer)
   execute a:window.'wincmd w'
   execute 'confirm buffer '.a:buffer
 endfunction
-

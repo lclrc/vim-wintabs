@@ -67,8 +67,13 @@ endfunction
 call s:set('g:wintabs_autoclose', 1)
 call s:set('g:wintabs_autoclose_vim', 0)
 call s:set('g:wintabs_autoclose_vimtab', 0)
+call s:set('g:wintabs_autoclose_vimtab', 0)
 call s:set('g:wintabs_switchbuf', &switchbuf)
-call s:set('g:wintabs_ignored_filetypes', ['gitcommit', 'vundle', 'qf', 'vimfiler'])
+call s:set('g:wintabs_delete_buffers', 0)
+call s:set('g:wintabs_buffer_limit', 0)
+call s:set('g:wintabs_ignored_filetypes', ['gitcommit', 'vundle', 'qf',
+      \ 'vimfiler'])
+
 call s:set('g:wintabs_reverse_order', 0)
 call s:set('g:wintabs_undo_limit', 100)
 call s:set('g:wintabs_marker_modified', "!")
@@ -76,7 +81,8 @@ call s:set('g:wintabs_marker_current', "*")
 call s:set('g:wintabs_separator', " ")
 call s:set('g:wintabs_only_basename', 1)
 call s:set('g:wintabs_show_number', 0)
-call s:set('g:wintabs_number_separator', " ")
+call s:set('g:wintabs_not_current_character_limit', 0)
+call s:set('g:wintabs_marker_cutoff', "…")
 
 " init session
 call wintabs#session#init()
