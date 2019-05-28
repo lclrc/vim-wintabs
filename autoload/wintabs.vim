@@ -443,13 +443,13 @@ function! wintabs#do(cmd)
   endfor
 endfunction
 
-" set tabline/statusline
 function! wintabs#init()
   call wintabs#refresh_buflist(0)
 
   augroup wintabs_refresh_if_none
     autocmd!
-    autocmd BufWinEnter,VimEnter,BufFilePost * call wintabs#refresh_buflist(0)
+    autocmd BufWinEnter,VimEnter,BufFilePost,TermOpen * 
+          \ call wintabs#refresh_buflist(0)
   augroup END
 
   " hijack buffer switching
