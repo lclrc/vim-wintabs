@@ -66,6 +66,8 @@ function! wintabs#get_tablist(type)
 
       if winbufnr(0) == l:i
         let s:list = s:list . g:wintabs_marker_current
+      elseif bufnr('#') == l:i
+        let s:list = s:list . g:wintabs_marker_previous
       else
         if g:wintabs_not_current_character_limit &&
               \ len(l:name) > (g:wintabs_not_current_character_limit + 1)
@@ -448,7 +450,7 @@ function! wintabs#init()
 
   augroup wintabs_refresh_if_none
     autocmd!
-    autocmd BufWinEnter,VimEnter,BufFilePost,TermOpen * 
+    autocmd BufWinEnter,VimEnter,BufFilePost,TerminalOpen * 
           \ call wintabs#refresh_buflist(0)
   augroup END
 
