@@ -450,8 +450,13 @@ function! wintabs#init()
 
   augroup wintabs_refresh_if_none
     autocmd!
-    autocmd BufWinEnter,VimEnter,BufFilePost,TerminalOpen * 
-          \ call wintabs#refresh_buflist(0)
+    if has('nvim')
+        autocmd BufWinEnter,VimEnter,BufFilePost,TermOpen * 
+                    \ call wintabs#refresh_buflist(0)
+    else
+        autocmd BufWinEnter,VimEnter,BufFilePost,TerminalOpen * 
+                    \ call wintabs#refresh_buflist(0)
+    endif
   augroup END
 
   " hijack buffer switching
